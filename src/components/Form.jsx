@@ -1,12 +1,41 @@
-import React, { useState } from 'react'
-import { addPost } from '../api/postApi';
+import React, { useEffect, useState } from 'react'
+import { addPost, updateData } from '../api/postApi';
 
- export const Form = ({data,setData}) => {
+ export const Form = ({data,setData,updateDataApi, setUpadateDataApi}) => {
 
   const [addData,setAddData] = useState({
     title : "",
     body  : "",
   });
+
+  // let isEmpty = addData.title === "" && addData.body === "";
+  // let isEmpty = Object.keys(updateDataApi).length === 0;
+  // get the updated data and add into input field
+
+
+  let isEmpty = !updateDataApi || 
+  (Object.keys(updateDataApi).length === 0 || 
+  (updateDataApi.title === "" && updateDataApi.body === ""));
+
+// useEffect(()=>{
+//   updateDataApi && setAddData({
+//     title: updateDataApi.title || "",
+//     body: updateDataApi.body || "",
+//   })
+// } ,[updateDataApi])
+
+
+useEffect(() => {
+  if (updateDataApi && Object.keys(updateDataApi).length > 0) {
+    console.log("Updating addData with:", updateDataApi);
+    setAddData({
+      title: updateDataApi.title || "",
+      body: updateDataApi.body || "",
+    });
+  }
+}, [updateDataApi]);
+
+
 
   const handleInputChange = (e)=>{
     const name = e.target.name;
@@ -29,10 +58,67 @@ import { addPost } from '../api/postApi';
       setAddData({title: "", body: ""})
      }
   }
-  const handleFormSubmit = (e)=>{
-    e.preventDefault();
-    addpostdata();
+
+  // updatePostData
+
+  const updatePostData = async() =>{
+    console.log("reachable");
+    
+    try {
+      const res = await updateData( updateDataApi.id,addData)
+    console.log(res);
+
+    // prev has all the set data
+    if(res.status === 200){
+      setData((prev)=>{
+        console.log("prev data :  ")  
+        return prev.map((curElem)=>{
+          return curElem.id === res.data.id ? res.data : curElem;
+        });
+      });
+      setAddData({title: "", body : ""});
+      setUpadateDataApi({});
+    }
+    } catch (error) {
+      console.log(error)
+    }
+    
   }
+
+
+
+
+
+  // form submisson 
+  // const handleFormSubmit = (e)=>{
+  //   e.preventDefault();
+  //   const action = e.nativeEvent.submitter.value;
+  //   console.log("Action triggered:", action);
+  //   if(action === "Add"){
+  //     addpostdata();
+  //   } else if(action === "Edit") {
+  //     updatePostData();
+  //   }
+  // }
+
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    const action = e.nativeEvent.submitter.value;
+    console.log("Action triggered:", action);
+    console.log("Current addData:", addData);
+    console.log("isEmpty (inside submit):", isEmpty);
+    if (action === "Add") {
+      addpostdata();
+    } else if (action === "Edit") {
+      updatePostData();
+    }
+  };
+
+
+
+
+
   return (
     <form onSubmit={handleFormSubmit}>
         <div>
@@ -64,7 +150,15 @@ import { addPost } from '../api/postApi';
 
                    
         </div>
-        <button type='submit'>Add</button>
+        {/* <button type='submit' value={isEmpty ? "Add" : "Edit"}>
+          {isEmpty ? "Add" : "Edit"}
+          </button> */}
+
+
+<button type="submit" value={isEmpty ? "Add" : "Edit"}>
+  {console.log("Button text:", isEmpty ? "Add" : "Edit")}
+  {isEmpty ? "Add" : "Edit"}
+</button>
     </form>
    
   )
